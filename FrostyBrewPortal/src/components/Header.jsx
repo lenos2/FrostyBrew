@@ -1,0 +1,12 @@
+import NavBar from '@/components/NavBar';
+
+const Header = () => {
+  return (
+    <header>
+      <h1>todos</h1>
+      <p>Items will persist in the browser local storage</p>
+      <NavBar />
+    </header>
+  );
+};
+export default Header;
