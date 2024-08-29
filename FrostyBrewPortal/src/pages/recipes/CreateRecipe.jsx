@@ -12,6 +12,7 @@ import { openEditor } from "react-profile";
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import Swal from 'sweetalert2'
 
 const CreateRecipe = () => {
 
@@ -29,6 +30,12 @@ const CreateRecipe = () => {
 
         const form = e.currentTarget;
         if (form.checkValidity() === false) {
+            Swal.fire({
+                title: 'Please Fill in all fields',
+                icon: 'info',
+                showConfirmButton: false,
+                timer: 1500
+            })
             e.stopPropagation();
         }
         setFormValidated(true);
@@ -45,6 +52,13 @@ const CreateRecipe = () => {
                 await setDoc(doc(db, "recipes", name), recipe)
                     .then(function () {
                         console.log("Recipe created");
+                        Swal.fire({
+                            title: 'Recipe Added',
+                            icon: 'success',
+                            position: "top-end",
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
                     });
             });
         });
