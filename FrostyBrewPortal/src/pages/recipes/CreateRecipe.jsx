@@ -48,21 +48,6 @@ const CreateRecipe = () => {
                     });
             });
         });
-        // uploadBytes(recipeImageRef, recipeImage.img).then((snapshot) => {
-        //     console.log('Uploaded a blob or file!');
-
-        //     getDownloadURL(recipeImageRef).then(async (downloadURL) => {
-        //         console.log('File available at', downloadURL);
-
-        //         const recipe = { name, description, ingredients, complexity, type: recipeType, instructions, image: downloadURL };
-        //         await setDoc(doc(db, "recipes", name), recipe)
-        //             .then(function () {
-        //                 console.log("Recipe created");
-        //             });
-        //     });
-
-        // });
-
     };
 
     const onFileChange = async (e) => {
@@ -78,15 +63,30 @@ const CreateRecipe = () => {
 
     return (
         <Container>
-            <Row>
+            <Row style={{ minHeight: '300px' }}>
                 <Col sm="1" lg="2"></Col>
-                <Col><h1>Create Recipe</h1></Col>
+                <Col className="align-middle"><h1>Create Recipe</h1></Col>
                 <Col sm="1" lg="2"></Col>
             </Row>
             <Row>
                 <Col sm="1" lg="2"></Col>
                 <Col>
                     <Form validated={formValidated} onSubmit={handleSubmit}>
+
+                        <Form.Group className="mb-3">
+                            <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
+                                <img src={recipeImage.img} style={{ maxHeight: '250px' }} />
+                            </Form.Group>
+
+                            <Form.Group className="mb-3">
+
+                                <Form.Label>Upload Recipe Image</Form.Label>
+
+                                <Form.Control type="file" onChange={onFileChange} required />
+
+                            </Form.Group>
+                        </Form.Group>
+
                         <Form.Group className="mb-3">
                             <Form.Label>Name</Form.Label>
                             <Form.Control type="text" placeholder="Enter recipe name" required
@@ -132,21 +132,11 @@ const CreateRecipe = () => {
                                 <option value="SUPER_HARD">Super Hard - 5 Stars</option>
                             </Form.Select>
                         </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Recipe Image</Form.Label>
-                            <img src={recipeImage} />
-                            <Form.Group className="mb-3">
-
-                                <Form.Label>Upload Recipe Image</Form.Label>
-
-                                <Form.Control type="file" onChange={onFileChange} required />
-
-                            </Form.Group>
+                        <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
+                            <Button variant="primary" type="submit" className='ls-button'>
+                                Submit
+                            </Button>
                         </Form.Group>
-
-                        <Button variant="primary" type="submit">
-                            Submit
-                        </Button>
                     </Form>
                 </Col>
                 <Col sm="1" lg="2"></Col>
