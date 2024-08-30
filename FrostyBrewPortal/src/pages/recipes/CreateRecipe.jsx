@@ -13,6 +13,7 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Swal from 'sweetalert2'
+import Loader from '@/components/Loader';
 
 const CreateRecipe = () => {
 
@@ -24,6 +25,7 @@ const CreateRecipe = () => {
     const [instructions, setInstructions] = useState('');
     const [recipeImage, setRecipeImage] = useState('');
     const [formValidated, setFormValidated] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -39,7 +41,7 @@ const CreateRecipe = () => {
             e.stopPropagation();
         }
         setFormValidated(true);
-
+        setIsLoading(true);
         //Upload image
         const recipeImageRef = ref(recipesStorageRef, recipeType + "/" + recipeImage.name);
         uploadString(recipeImageRef, recipeImage.img, 'data_url').then((snapshot) => {
@@ -59,6 +61,7 @@ const CreateRecipe = () => {
                             showConfirmButton: false,
                             timer: 1500
                         })
+                        setIsLoading(false);
                     });
             });
         });
@@ -77,11 +80,6 @@ const CreateRecipe = () => {
 
     return (
         <Container>
-            <Row style={{ minHeight: '300px' }}>
-                <Col sm="1" lg="2"></Col>
-                <Col className="align-middle"><h1>Create Recipe</h1></Col>
-                <Col sm="1" lg="2"></Col>
-            </Row>
             <Row>
                 <Col sm="1" lg="2"></Col>
                 <Col>
@@ -147,8 +145,11 @@ const CreateRecipe = () => {
                             </Form.Select>
                         </Form.Group>
                         <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
-                            <Button variant="primary" type="submit" className='ls-button'>
+                            <Button hidden={isLoading} variant="primary" type="submit" className='ls-button'>
                                 Submit
+                            </Button>
+                            <Button hidden={!isLoading} variant="primary" className='ls-button'>
+                                <Loader />
                             </Button>
                         </Form.Group>
                     </Form>

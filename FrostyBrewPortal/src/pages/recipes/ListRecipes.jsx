@@ -5,12 +5,14 @@ import { doc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import SweetAlert2 from 'react-sweetalert2';
+import Swal from 'sweetalert2'
+import Loader from '@/components/Loader';
 
 const ListRecipes = () => {
     const [loading, setLoading] = useState(true);
     const [products, setPosts] = useState([]);
     const [swalProps, setSwalProps] = useState({});
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const getData = async () => {
         const products = collection(db, 'recipes');
@@ -27,6 +29,7 @@ const ListRecipes = () => {
     }, []);
 
     const deleteRecipe = async (recipeId) => {
+        setIsDeleting(true);
         await deleteDoc(doc(db, "recipes", recipeId))
             .then((snapshot) => {
                 console.log("Record Deleted");
@@ -38,6 +41,7 @@ const ListRecipes = () => {
                     timer: 1500
                 })
                 getData();
+                setIsDeleting(false);
             }).catch((err) => {
                 console.log("Failed to delete", err);
                 Swal.fire({
@@ -47,23 +51,21 @@ const ListRecipes = () => {
                     showConfirmButton: false,
                     timer: 1500
                 })
+                setIsDeleting(false);
             });
     }
 
     if (loading) {
         return (
-            <div>Firebase is still loading...</div>
+            <div className='ls-full-page-loader'>
+                <Loader />
+                <h1>Recipes loading...</h1>
+            </div>
         )
     } else {
         return (
             <Container>
                 <Row>
-                    <Col sm="1" lg="2"></Col>
-                    <Col><h1>Recipes</h1></Col>
-                    <Col sm="1" lg="2"></Col>
-                </Row>
-                <Row>
-                    <Col sm="1" lg="2"></Col>
                     <Col>
                         <Table striped bordered hover>
                             <thead>
@@ -88,7 +90,9 @@ const ListRecipes = () => {
                                                     <td>
                                                         <span className="btn btn-primary ls-btn" >View</span>
                                                         <span className="btn btn-warning ls-btn" >Edit</span>
-                                                        <span className="btn btn-danger ls-btn" onClick={() => deleteRecipe(product.name)}>Delete</span></td>
+                                                        <span hidden={isDeleting} className="btn btn-danger ls-btn" onClick={() => deleteRecipe(product.name)}>Delete</span>
+                                                        <span hidden={!isDeleting} className="btn btn-danger ls-btn"><Loader /></span>
+                                                    </td>
                                                 </tr>
                                             );
                                         })
@@ -98,7 +102,6 @@ const ListRecipes = () => {
                         </Table>
 
                     </Col>
-                    <Col sm="1" lg="2"></Col>
                 </Row>
             </Container>
 

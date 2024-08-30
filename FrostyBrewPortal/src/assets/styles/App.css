@@ -42,9 +42,14 @@
 }
 
 body {
-  color: #ff2778;
+  /*color: #ff2778;*/
 }
 
 .ls-button {
   padding: 5px 30px;
+}
+
+.ls-full-page-loader{
+  width: 100%;
+  text-align: center;
 }
