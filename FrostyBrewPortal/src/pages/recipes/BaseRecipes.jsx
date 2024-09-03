@@ -1,17 +1,26 @@
+import React, { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
 const BaseRecipes = () => {
+    const [pageTitle, setPageTitle] = useState("Recipes");
+
     return (
+
+
         <Container>
-            <Row style={{ minHeight: '300px' }}>
-                <Col sm="1" lg="2"></Col>
-                <Col className="align-middle"><h1>Create Recipe</h1></Col>
-                <Col sm="1" lg="2"></Col>
-            </Row>
-            <Outlet />
+            <div class="mb-4 bg-body-tertiary rounded-3">
+                <div class="container-fluid py-5 px-5">
+                    <h1 class="display-5 fw-bold">{pageTitle}</h1>
+                </div>
+            </div>
+
+            <div class=" h-100 p-5 bg-body-tertiary border rounded-3">
+                <Outlet />
+            </div>
+
         </Container>
     );
 }

@@ -4,14 +4,14 @@ import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage
 import { doc, setDoc } from "firebase/firestore";
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import ReactProfile from "react-profile";
 import "react-profile/themes/default.min.css";
 import { openEditor } from "react-profile";
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import Swal from 'sweetalert2'
 import Loader from '@/components/Loader';
 
@@ -50,7 +50,16 @@ const CreateRecipe = () => {
             getDownloadURL(recipeImageRef).then(async (downloadURL) => {
                 console.log('File available at', downloadURL);
 
-                const recipe = { name, description, ingredients, complexity, type: recipeType, instructions, image: downloadURL };
+                const recipe = {
+                    name,
+                    description,
+                    ingredients,
+                    complexity,
+                    type: recipeType,
+                    instructions,
+                    image: downloadURL
+                };
+
                 await setDoc(doc(db, "recipes", name), recipe)
                     .then(function () {
                         console.log("Recipe created");

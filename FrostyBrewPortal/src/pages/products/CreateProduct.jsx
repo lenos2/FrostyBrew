@@ -7,6 +7,9 @@ import Form from 'react-bootstrap/Form';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
+import { openEditor } from "react-profile";
+import Swal from 'sweetalert2'
+import Loader from '@/components/Loader';
 
 const CreateProduct = () => {
 
@@ -17,6 +20,7 @@ const CreateProduct = () => {
     const [inStock, setInStock] = useState('yes');
     const [productImage, setProductImage] = useState('');
     const [formValidated, setFormValidated] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -26,19 +30,37 @@ const CreateProduct = () => {
             e.stopPropagation();
         }
         setFormValidated(true);
+        setIsLoading(true);
 
         //Upload image
         const productImageRef = ref(productsStorageRef, productType + "/" + productImage.name);
         uploadBytes(productImageRef, productImage).then((snapshot) => {
             console.log('Uploaded a blob or file!');
+            console.log(JSON.stringify(productImageRef));
 
             getDownloadURL(productImageRef).then(async (downloadURL) => {
                 console.log('File available at', downloadURL);
 
-                const product = { name, description, price: Number(price), type: productType, in_stock: inStock, image: downloadURL };
+                const product = {
+                    name,
+                    description,
+                    price: Number(price),
+                    type: productType,
+                    in_stock: inStock,
+                    image: downloadURL,
+                    imageRef: productImageRef.fullPath()
+                };
                 await setDoc(doc(db, "products", name), product)
                     .then(function () {
                         console.log("Product created");
+                        Swal.fire({
+                            title: 'Product Added',
+                            icon: 'success',
+                            position: "top-end",
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                        setIsLoading(false);
                     });
             });
 
@@ -47,22 +69,41 @@ const CreateProduct = () => {
 
     };
 
-    const onFileChange = (e) => {
-        setProductImage(e.target.files[0]);
+    const onFileChange = async (e) => {
         console.log(e.target.files[0]);
+
+        const result = await openEditor({ src: e.target.files[0] });
+
+        let img = {
+            name: e.target.files[0].name,
+            img: result.editedImage.getDataURL(),
+        };
+        //console.log(result.editedImage.getDataURL());
+        setProductImage(img);
     }
 
     return (
         <Container>
             <Row>
                 <Col sm="1" lg="2"></Col>
-                <Col><h1>Create Product</h1></Col>
-                <Col sm="1" lg="2"></Col>
-            </Row>
-            <Row>
-                <Col sm="1" lg="2"></Col>
                 <Col>
                     <Form validated={formValidated} onSubmit={handleSubmit}>
+
+
+                        <Form.Group className="mb-3">
+                            <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
+                                <img src={productImage.img} style={{ maxHeight: '250px' }} />
+                            </Form.Group>
+
+                            <Form.Group className="mb-3">
+
+                                <Form.Label>Upload Product Image</Form.Label>
+
+                                <Form.Control type="file" onChange={onFileChange} required />
+
+                            </Form.Group>
+                        </Form.Group>
+
                         <Form.Group className="mb-3">
                             <Form.Label>Name</Form.Label>
                             <Form.Control type="text" placeholder="Enter product name" required
@@ -83,13 +124,18 @@ const CreateProduct = () => {
                             <Form.Select aria-label="Select product type" required
                                 value={productType} onChange={(e) => setProductType(e.target.value)}>
                                 <option value="">Select Product Type</option>
-                                <option value="COLLECTABLE">Collectables</option>
                                 <option value="BEER">Beer</option>
-                                <option value="EXTRA">Extra</option>
+                                <option value="CIDER">Cider</option>
                                 <option value="LIQUOR">Liquor</option>
-                                <option value="RENTAL">Rental</option>
-                                <option value="SNACK">Snack</option>
+                                <option value="WHISKEY">Whiskey</option>
+                                <option value="RUM">Rum</option>
+                                <option value="VODKA">Vodka</option>
+                                <option value="GIN">Gin</option>
                                 <option value="WINE">Wine</option>
+                                <option value="SNACK">Snack</option>
+                                <option value="EXTRA">Extra</option>
+                                <option value="COLLECTABLE">Collectables</option>
+                                <option value="RENTAL">Rental</option>
                             </Form.Select>
                         </Form.Group>
                         <Form.Group className="mb-3">
@@ -100,13 +146,7 @@ const CreateProduct = () => {
                                 <option value="no">No</option>
                             </Form.Select>
                         </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Product Image</Form.Label>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Upload Product Image</Form.Label>
-                                <Form.Control type="file" onChange={onFileChange} required />
-                            </Form.Group>
-                        </Form.Group>
+
                         <Button variant="primary" type="submit">
                             Submit
                         </Button>

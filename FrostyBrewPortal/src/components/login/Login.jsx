@@ -1,64 +1,31 @@
+import { useState, useRef, useEffect } from 'react';
 import Container from 'react-bootstrap/Container';
-import Stack from 'react-bootstrap/Stack';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, getDocs } from 'firebase/firestore/lite';
-
-const firebaseConfig = {
-    apiKey: process.env.API_KEY,
-    authDomain: process.env.AUTH_DOMAIN,
-    projectId: process.env.PROJECT_ID,
-    storageBucket: process.env.STORAGE_BUCKET,
-    messagingSenderId: process.env.MSSAGING_SENDER_ID,
-    appId: process.env.APP_ID,
-    measurementId: process.env.MEASUREMENT_ID
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);
-
-// Get a list of cities from your database
-async function getProducts(db) {
-    const products = collection(db, 'products');
-    const productsSS = await getDocs(products);
-    const productList = productsSS.docs.map(doc => doc.data());
-    return productList;
-}
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Loader from '@components/Loader';
 
 const Login = () => {
-    let products = getProducts(db);
-
+    const [isLoading, setIsLoading] = useState(false);
     return (
         <Container fluid>
-            <Stack gap={3}>
-                <Form>
-                    <Form.Group className="mb-3" controlId="formBasicEmail">
-                        <Form.Label>Email address</Form.Label>
-                        <Form.Control type="email" placeholder="Enter email" />
-                        <Form.Text className="text-muted">
-                            We'll never share your email with anyone else.
-                        </Form.Text>
-                    </Form.Group>
-
-                    <Form.Group className="mb-3" controlId="formBasicPassword">
-                        <Form.Label>Password</Form.Label>
-                        <Form.Control type="password" placeholder="Password" />
-                    </Form.Group>
-                    <Form.Group className="mb-3" controlId="formBasicCheckbox">
-                        <Form.Check type="checkbox" label="Check me out" />
-                    </Form.Group>
-                    <Button variant="primary" type="submit">
-                        Submit
-                    </Button>
-                </Form>
-            </Stack>
-            <div>Login</div>
-
+            <Form class="form-signin">
+                <img class="mb-4" src="https://getbootstrap.com/docs/4.0/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72" />
+                <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+                <Form.Label for="inputEmail" class="sr-only">Email address</Form.Label>
+                <Form.Control type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus />
+                <Form.Label for="inputPassword" class="sr-only">Password</Form.Label>
+                <Form.Control type="password" id="Form.ControlPassword" class="form-control" placeholder="Password" required />
+                <div class="checkbox mb-3">
+                    <Form.Label>
+                        <Form.Control type="checkbox" value="remember-me" /> Remember me
+                    </Form.Label>
+                </div>
+                <Button hidden={isLoading} class="btn btn-lg btn-primary btn-block" type="submit">Sign in</Button>
+                <Button hidden={!isLoading} class="btn btn-lg btn-primary btn-block"><Loader /></Button>
+                <p class="mt-5 mb-3 text-muted">&copy; 2017-2018</p>
+            </Form>
         </Container>
     );
 };
