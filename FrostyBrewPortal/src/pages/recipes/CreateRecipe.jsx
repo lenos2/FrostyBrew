@@ -58,7 +58,6 @@ const CreateRecipe = () => {
                     type: recipeType,
                     instructions,
                     image: downloadURL,
-                    imageRef: recipeImageRef.toString()
                 };
 
                 await setDoc(doc(db, "recipes", name), recipe)
