@@ -13,7 +13,7 @@ const BaseProducts = () => {
                 </div>
             </div>
 
-            <div class=" h-100 p-5 bg-body-tertiary border rounded-3">
+            <div class=" h-100 py-2 bg-body-tertiary border rounded-3">
                 <Outlet />
             </div>
 

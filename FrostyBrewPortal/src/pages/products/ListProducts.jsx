@@ -1,6 +1,6 @@
 import Table from 'react-bootstrap/Table';
 import React, { useEffect, useState } from "react";
-import { db, productsStorageRef } from '@/config/FirebaseDb';
+import { db, productsStorageRef, firebaseStorage } from '@/config/FirebaseDb';
 import { doc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { ref, deleteObject } from "firebase/storage";
 import Container from 'react-bootstrap/Container';
@@ -29,13 +29,15 @@ const ListProducts = () => {
         return () => { };
     }, []);
 
-    const deleteProduct = async (productId, image) => {
+    const deleteProduct = async (productId, imageUrl) => {
         setIsDeleting(true);
         await deleteDoc(doc(db, "products", productId))
             .then((snapshot) => {
 
                 // Delete the file
-                ref(productsStorageRef).refFromURL(image).delete().then(() => {
+                const httpsReference = ref(firebaseStorage, imageUrl); // this url is coming from getDownloadURL()
+                // Then you do whatever you want with the ref, 🍿 like remove files:
+                deleteObject(httpsReference).then(() => {
                     // File deleted successfully
                     console.log("Image deleted");
                 }).catch((error) => {

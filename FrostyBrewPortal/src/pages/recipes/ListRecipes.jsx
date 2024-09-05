@@ -1,7 +1,8 @@
 import Table from 'react-bootstrap/Table';
 import React, { useEffect, useState } from "react";
-import { db } from '@/config/FirebaseDb';
+import { db, firebaseStorage } from '@/config/FirebaseDb';
 import { doc, collection, getDocs, deleteDoc } from 'firebase/firestore';
+import { ref, deleteObject } from "firebase/storage";
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
@@ -30,12 +31,14 @@ const ListRecipes = () => {
         return () => { };
     }, []);
 
-    const deleteRecipe = async (recipeId) => {
+    const deleteRecipe = async (recipeId, imageUrl) => {
         setIsDeleting(true);
         await deleteDoc(doc(db, "recipes", recipeId))
             .then((snapshot) => {
                 // Delete the file
-                deleteObject(ref(imageRef)).then(() => {
+                const httpsReference = ref(firebaseStorage, imageUrl); // this url is coming from getDownloadURL()
+                // Then you do whatever you want with the ref, 🍿 like remove files:
+                deleteObject(httpsReference).then(() => {
                     // File deleted successfully
                     console.log("Image deleted");
                 }).catch((error) => {
@@ -50,7 +53,7 @@ const ListRecipes = () => {
                     position: "top-end",
                     showConfirmButton: false,
                     timer: 1500
-                })
+                });
                 getData();
                 setIsDeleting(false);
             }).catch((err) => {
@@ -61,11 +64,11 @@ const ListRecipes = () => {
                     position: "top-end",
                     showConfirmButton: false,
                     timer: 1500
-                })
+                });
                 setIsDeleting(false);
             });
-    }
 
+    }
     if (loading) {
         return (
             <div className='ls-full-page-loader'>
@@ -108,7 +111,7 @@ const ListRecipes = () => {
                                                     <td>
                                                         <span className="btn btn-primary ls-btn" >View</span>
                                                         <span className="btn btn-warning ls-btn" >Edit</span>
-                                                        <span hidden={isDeleting} className="btn btn-danger ls-btn" onClick={() => deleteRecipe(product.name, product.imageRef)}>Delete</span>
+                                                        <span hidden={isDeleting} className="btn btn-danger ls-btn" onClick={() => deleteRecipe(product.name, product.image)}>Delete</span>
                                                         <span hidden={!isDeleting} className="btn btn-danger ls-btn"><Loader /></span>
                                                     </td>
                                                 </tr>

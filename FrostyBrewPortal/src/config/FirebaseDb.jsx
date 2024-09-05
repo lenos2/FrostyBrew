@@ -13,12 +13,13 @@ const firebaseConfig = {
     measurementId: import.meta.env.VITE_APP_MEASUREMENT_ID
 };
 
+//Tip : When Researching code, look for Firebase v7 Code or the modular API
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 export const db = getFirestore(app);
 // Initialize Cloud Storage and get a reference to the service
-const storage = getStorage(app);
-export const productsStorageRef = ref(storage, "products");
-export const recipesStorageRef = ref(storage, "recipes");
-export const productPromosStorageRef = ref(storage, "product promo");
+export const firebaseStorage = getStorage(app);
+export const productsStorageRef = ref(firebaseStorage, "products");
+export const recipesStorageRef = ref(firebaseStorage, "recipes");
+export const productPromosStorageRef = ref(firebaseStorage, "product promo");

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { db, productsStorageRef } from '@/config/FirebaseDb';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage";
 import { doc, setDoc } from "firebase/firestore";
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
@@ -34,9 +34,9 @@ const CreateProduct = () => {
 
         //Upload image
         const productImageRef = ref(productsStorageRef, productType + "/" + productImage.name);
-        uploadBytes(productImageRef, productImage).then((snapshot) => {
-            console.log('Uploaded a blob or file!');
-            console.log(JSON.stringify(productImageRef));
+        uploadString(recipeImageRef, recipeImage.img, 'data_url').then((snapshot) => {
+            console.log('Uploaded a data_url string!');
+            console.log(JSON.stringify(productImageRef.toString()));
 
             getDownloadURL(productImageRef).then(async (downloadURL) => {
                 console.log('File available at', downloadURL);
@@ -48,7 +48,7 @@ const CreateProduct = () => {
                     type: productType,
                     in_stock: inStock,
                     image: downloadURL,
-                    imageRef: productImageRef.fullPath()
+                    imageRef: productImageRef.toString()
                 };
                 await setDoc(doc(db, "products", name), product)
                     .then(function () {
@@ -61,6 +61,8 @@ const CreateProduct = () => {
                             timer: 1500
                         })
                         setIsLoading(false);
+
+                        //Navigate to the View page of the product
                     });
             });
 
@@ -70,7 +72,7 @@ const CreateProduct = () => {
     };
 
     const onFileChange = async (e) => {
-        console.log(e.target.files[0]);
+        //console.log(e.target.files[0]);
 
         const result = await openEditor({ src: e.target.files[0] });
 
@@ -147,9 +149,14 @@ const CreateProduct = () => {
                             </Form.Select>
                         </Form.Group>
 
-                        <Button variant="primary" type="submit">
-                            Submit
-                        </Button>
+                        <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
+                            <Button hidden={isLoading} variant="primary" type="submit" className='ls-button'>
+                                Submit
+                            </Button>
+                            <Button hidden={!isLoading} variant="primary" className='ls-button'>
+                                <Loader />
+                            </Button>
+                        </Form.Group>
                     </Form>
                 </Col>
                 <Col sm="1" lg="2"></Col>
