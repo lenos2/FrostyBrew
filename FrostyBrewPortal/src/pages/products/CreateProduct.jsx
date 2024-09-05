@@ -34,7 +34,7 @@ const CreateProduct = () => {
 
         //Upload image
         const productImageRef = ref(productsStorageRef, productType + "/" + productImage.name);
-        uploadString(recipeImageRef, recipeImage.img, 'data_url').then((snapshot) => {
+        uploadString(productImageRef, productImage.img, 'data_url').then((snapshot) => {
             console.log('Uploaded a data_url string!');
             console.log(JSON.stringify(productImageRef.toString()));
 
@@ -48,7 +48,6 @@ const CreateProduct = () => {
                     type: productType,
                     in_stock: inStock,
                     image: downloadURL,
-                    imageRef: productImageRef.toString()
                 };
                 await setDoc(doc(db, "products", name), product)
                     .then(function () {
