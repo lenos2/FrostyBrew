@@ -150,7 +150,7 @@ const CreateProduct = () => {
 
                         <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
                             <Button hidden={isLoading} variant="primary" type="submit" className='ls-button'>
-                                Submit
+                                Save
                             </Button>
                             <Button hidden={!isLoading} variant="primary" className='ls-button'>
                                 <Loader />

@@ -1,7 +1,11 @@
+//React Libraries
 import { useState, useRef, useEffect } from 'react';
 import { db, recipesStorageRef } from '@/config/FirebaseDb';
 import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { Routes, Route, useParams, Link } from 'react-router-dom';
+
+//Styling
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Container from 'react-bootstrap/Container';
@@ -15,8 +19,8 @@ import { openEditor } from "react-profile";
 import Swal from 'sweetalert2'
 import Loader from '@/components/Loader';
 
-const CreateRecipe = () => {
 
+const ViewRecipe = () => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [ingredients, setIngredients] = useState('');
@@ -24,8 +28,37 @@ const CreateRecipe = () => {
     const [complexity, setComplexity] = useState('');
     const [instructions, setInstructions] = useState('');
     const [recipeImage, setRecipeImage] = useState('');
+    const [hasNewImage, setHasNewImage] = useState(false);
     const [formValidated, setFormValidated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const { recipeName } = useParams();
+
+    const getData = async () => {
+        const docRef = doc(db, "recipes", recipeName);
+        const docSnap = await getDoc(docRef);
+        setIsLoading(true);
+
+        if (docSnap.exists()) {
+            //console.log("Document data:", docSnap.data());
+            setDescription(docSnap.data().description)
+            setIngredients(docSnap.data().ingredients)
+            setRecipeType(docSnap.data().type)
+            setComplexity(docSnap.data().complexity)
+            setInstructions(docSnap.data().instructions)
+            setRecipeImage(docSnap.data().image)
+            setName(docSnap.data().name)
+        } else {
+            // docSnap.data() will be undefined in this case
+            console.log("No such document!");
+        }
+
+        setIsLoading(false);
+    }
+
+    useEffect(() => {
+        getData();
+        return () => { };
+    }, []);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -43,47 +76,65 @@ const CreateRecipe = () => {
         setFormValidated(true);
         setIsLoading(true);
         //Upload image
-        const recipeImageRef = ref(recipesStorageRef, recipeType + "/" + recipeImage.name);
-        uploadString(recipeImageRef, recipeImage.img, 'data_url').then((snapshot) => {
-            console.log('Uploaded a data_url string!');
+        if (hasNewImage) {
 
-            getDownloadURL(recipeImageRef).then(async (downloadURL) => {
-                console.log('File available at', downloadURL);
+            const recipeImageRef = ref(recipesStorageRef, recipeType + "/" + recipeImage.name);
+            uploadString(recipeImageRef, recipeImage.img, 'data_url').then((snapshot) => {
+                console.log('Uploaded a data_url string!');
 
-                const recipe = {
-                    name,
-                    description,
-                    ingredients,
-                    complexity,
-                    type: recipeType,
-                    instructions,
-                    image: downloadURL,
-                };
+                getDownloadURL(recipeImageRef).then((downloadURL) => {
+                    console.log('File available at', downloadURL);
 
-                await setDoc(doc(db, "recipes", name), recipe)
-                    .then(function () {
-                        console.log("Recipe created");
-                        Swal.fire({
-                            title: 'Recipe Added',
-                            icon: 'success',
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 1500
-                        })
-                        setIsLoading(false);
-                    }).catch((err) => {
-                        console.log("Failed to save", err.toString());
-                        Swal.fire({
-                            title: 'Failed to save' + err.toString(),
-                            icon: 'danger',
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 1500
+                    const recipe = {
+                        name,
+                        description,
+                        ingredients,
+                        complexity,
+                        type: recipeType,
+                        instructions,
+                        image: downloadURL,
+                    };
+
+                    const recipeRef = doc(db, "recipes", name);
+                    updateDoc(recipeRef, recipe)
+                        .then(function () {
+                            console.log("Recipe updated");
+                            Swal.fire({
+                                title: 'Recipe Updated',
+                                icon: 'success',
+                                position: "top-end",
+                                showConfirmButton: false,
+                                timer: 1500
+                            })
+                            setIsLoading(false);
                         });
-                        setIsLoading(false);
-                    });
+                });
             });
-        });
+        } else {
+            const recipe = {
+                name,
+                description,
+                ingredients,
+                complexity,
+                type: recipeType,
+                instructions,
+                image: recipeImage,
+            };
+
+            const recipeRef = doc(db, "recipes", name);
+            updateDoc(recipeRef, recipe)
+                .then(function () {
+                    console.log("Recipe updated");
+                    Swal.fire({
+                        title: 'Recipe Updated',
+                        icon: 'success',
+                        position: "top-end",
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                    setIsLoading(false);
+                });
+        }
     };
 
     const onFileChange = async (e) => {
@@ -95,8 +146,8 @@ const CreateRecipe = () => {
         };
         //console.log(result.editedImage.getDataURL());
         setRecipeImage(img);
+        setHasNewImage(true);
     }
-
 
     const onClear = () => {
         //Clear all the fields
@@ -118,21 +169,18 @@ const CreateRecipe = () => {
 
                         <Form.Group className="mb-3">
                             <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
-                                <img src={recipeImage.img} style={{ maxHeight: '250px' }} />
+                                <img src={recipeImage} style={{ maxHeight: '250px' }} />
                             </Form.Group>
 
                             <Form.Group className="mb-3">
-
                                 <Form.Label>Upload Recipe Image</Form.Label>
-
-                                <Form.Control type="file" onChange={onFileChange} required />
-
+                                <Form.Control type="file" onChange={onFileChange} />
                             </Form.Group>
                         </Form.Group>
 
                         <Form.Group className="mb-3">
                             <Form.Label>Name</Form.Label>
-                            <Form.Control type="text" placeholder="Enter recipe name" required
+                            <Form.Control type="text" placeholder="Enter recipe name" required disabled={true}
                                 value={name} onChange={(e) => setName(e.target.value)} />
                         </Form.Group>
                         <Form.Group className="mb-3">
@@ -183,12 +231,12 @@ const CreateRecipe = () => {
                         </Row>
                         <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
                             <Button hidden={isLoading} variant="primary" type="submit" className='ls-button'>
-                                Submit
+                                Update
                             </Button>
                             <Button hidden={!isLoading} variant="primary" className='ls-button'>
                                 <Loader />
                             </Button>
-                            <Button variant="danger" type="submit" className='ls-button' onClick={onClear}>
+                            <Button variant="danger" className='ls-button' onClick={onClear}>
                                 clear
                             </Button>
                         </Form.Group>
@@ -198,6 +246,5 @@ const CreateRecipe = () => {
             </Row>
         </Container>
     );
-};
-
-export default CreateRecipe;
+}
+export default ViewRecipe;

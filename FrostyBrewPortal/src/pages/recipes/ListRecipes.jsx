@@ -109,8 +109,14 @@ const ListRecipes = () => {
                                                     <td>{product.complexity}</td>
                                                     <td>{product.type}</td>
                                                     <td>
-                                                        <span className="btn btn-primary ls-btn" >View</span>
-                                                        <span className="btn btn-warning ls-btn" >Edit</span>
+                                                        <Link to={"view/" + product.name} className={'nav-link'}>
+                                                            <span className="btn btn-primary ls-btn" >View</span>
+                                                        </Link>
+                                                        <Link to={"edit/" + product.name} className={'nav-link'}>
+                                                            <span className="btn btn-warning ls-btn" >Edit</span>
+                                                        </Link>
+
+
                                                         <span hidden={isDeleting} className="btn btn-danger ls-btn" onClick={() => deleteRecipe(product.name, product.image)}>Delete</span>
                                                         <span hidden={!isDeleting} className="btn btn-danger ls-btn"><Loader /></span>
                                                     </td>
