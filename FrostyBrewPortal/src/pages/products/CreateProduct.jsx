@@ -13,7 +13,7 @@ import Loader from '@/components/Loader';
 
 const CreateProduct = () => {
 
-    const [name, setName] = useState('');
+    const [productName, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState(0);
     const [productType, setProductType] = useState('');
@@ -32,6 +32,7 @@ const CreateProduct = () => {
         setFormValidated(true);
         setIsLoading(true);
 
+        var name = productName.trim();
         //Upload image
         const productImageRef = ref(productsStorageRef, productType + "/" + productImage.name);
         uploadString(productImageRef, productImage.img, 'data_url').then((snapshot) => {
@@ -40,6 +41,7 @@ const CreateProduct = () => {
 
             getDownloadURL(productImageRef).then(async (downloadURL) => {
                 console.log('File available at', downloadURL);
+
 
                 const product = {
                     name,
@@ -108,7 +110,7 @@ const CreateProduct = () => {
                         <Form.Group className="mb-3">
                             <Form.Label>Name</Form.Label>
                             <Form.Control type="text" placeholder="Enter product name" required
-                                value={name} onChange={(e) => setName(e.target.value)} />
+                                value={productName} onChange={(e) => setName(e.target.value)} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Description</Form.Label>
@@ -133,9 +135,10 @@ const CreateProduct = () => {
                                 <option value="VODKA">Vodka</option>
                                 <option value="GIN">Gin</option>
                                 <option value="WINE">Wine</option>
-                                <option value="SNACK">Snack</option>
-                                <option value="EXTRA">Extra</option>
-                                <option value="COLLECTABLE">Collectables</option>
+                                <option value="SNACK">Snacks</option>
+                                <option value="SOFT_DRINK">Soft Drink</option>
+                                <option value="MIXER">Mixer</option>
+                                <option value="COLLECTABLE">Collectable</option>
                                 <option value="RENTAL">Rental</option>
                             </Form.Select>
                         </Form.Group>
