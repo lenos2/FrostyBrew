@@ -34,9 +34,9 @@ const ViewRecipe = () => {
     const { recipeName } = useParams();
 
     const getData = async () => {
+        setIsLoading(true);
         const docRef = doc(db, "recipes", recipeName);
         const docSnap = await getDoc(docRef);
-        setIsLoading(true);
 
         if (docSnap.exists()) {
             //console.log("Document data:", docSnap.data());
@@ -169,7 +169,8 @@ const ViewRecipe = () => {
 
                         <Form.Group className="mb-3">
                             <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
-                                <img src={recipeImage} style={{ maxHeight: '250px' }} />
+                                <img hidden={hasNewImage} src={recipeImage} style={{ maxHeight: '250px' }} />
+                                <img hidden={!hasNewImage} src={recipeImage.img} style={{ maxHeight: '250px' }} />
                             </Form.Group>
 
                             <Form.Group className="mb-3">

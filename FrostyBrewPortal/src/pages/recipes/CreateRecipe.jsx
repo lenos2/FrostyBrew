@@ -17,7 +17,7 @@ import Loader from '@/components/Loader';
 
 const CreateRecipe = () => {
 
-    const [name, setName] = useState('');
+    const [recipeName, setName] = useState('');
     const [description, setDescription] = useState('');
     const [ingredients, setIngredients] = useState('');
     const [recipeType, setRecipeType] = useState('');
@@ -42,6 +42,8 @@ const CreateRecipe = () => {
         }
         setFormValidated(true);
         setIsLoading(true);
+
+        var name = recipeName.trim();
         //Upload image
         const recipeImageRef = ref(recipesStorageRef, recipeType + "/" + recipeImage.name);
         uploadString(recipeImageRef, recipeImage.img, 'data_url').then((snapshot) => {
@@ -49,7 +51,6 @@ const CreateRecipe = () => {
 
             getDownloadURL(recipeImageRef).then(async (downloadURL) => {
                 console.log('File available at', downloadURL);
-
                 const recipe = {
                     name,
                     description,
@@ -133,7 +134,7 @@ const CreateRecipe = () => {
                         <Form.Group className="mb-3">
                             <Form.Label>Name</Form.Label>
                             <Form.Control type="text" placeholder="Enter recipe name" required
-                                value={name} onChange={(e) => setName(e.target.value)} />
+                                value={recipeName} onChange={(e) => setName(e.target.value)} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Description</Form.Label>

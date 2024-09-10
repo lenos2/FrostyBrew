@@ -14,13 +14,19 @@ import ListRecipes from '@/pages/recipes/ListRecipes';
 import ViewRecipe from "@/pages/recipes/ViewRecipe";
 import EditRecipe from "@/pages/recipes/EditRecipe";
 import CreateRecipe from "@/pages/recipes/CreateRecipe";
+//Banners
 import EditBanner from "./pages/cover_banner/EditBanner";
 import BaseBanner from "./pages/cover_banner/BaseBanner";
+//Orders
+import BaseOrders from '@/pages/orders/BaseOrders';
+import ListOrders from '@/pages/orders/ListOrders';
+import ViewOrder from "@/pages/orders/ViewOrder";
+import EditOrder from "@/pages/orders/EditOrder";
+import CreateOrder from "@/pages/orders/CreateOrder";
 
 const Routing = () => {
 
     return (
-
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<BaseLayout />}>
@@ -36,6 +42,12 @@ const Routing = () => {
                         <Route path="view/:recipeName" element={<ViewRecipe />} />
                         <Route path="edit/:recipeName" element={<EditRecipe />} />
                         <Route path="create" element={<CreateRecipe />} />
+                    </Route>
+                    <Route path="orders" element={<BaseOrders />}>
+                        <Route index element={<ListOrders />} />
+                        <Route path="view/:recipeName" element={<ViewOrder />} />
+                        <Route path="edit/:recipeName" element={<EditOrder />} />
+                        <Route path="create" element={<CreateOrder />} />
                     </Route>
                     <Route path="cover_banner" element={<BaseBanner />}>
                         <Route index element={<EditBanner />} />
