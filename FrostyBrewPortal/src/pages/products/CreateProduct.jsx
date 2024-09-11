@@ -138,6 +138,7 @@ const CreateProduct = () => {
                                 <option value="SNACK">Snacks</option>
                                 <option value="SOFT_DRINK">Soft Drink</option>
                                 <option value="MIXER">Mixer</option>
+                                <option value="PLATTER">Platter</option>
                                 <option value="COLLECTABLE">Collectable</option>
                                 <option value="RENTAL">Rental</option>
                             </Form.Select>
