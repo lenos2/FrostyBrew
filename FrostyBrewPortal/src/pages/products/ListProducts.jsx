@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, useParams, Link } from 'react-router-dom';
-import { db, productsStorageRef, firebaseStorage } from '@/config/FirebaseDb';
-import { doc, collection, getDocs, deleteDoc } from 'firebase/firestore';
-import { ref, deleteObject } from "firebase/storage";
+import { supabase } from '@/config/SupaBaseDb';
+
 import Container from 'react-bootstrap/Container';
 import Table from 'react-bootstrap/Table';
 import Row from 'react-bootstrap/Row';
@@ -17,11 +16,10 @@ const ListProducts = () => {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const getData = async () => {
-        const products = collection(db, 'products');
-        const productsSS = await getDocs(products);
-        const getPostsFromFb = productsSS.docs.map(doc => doc.data());
-        console.log(productsSS.docs);
-        setPosts(getPostsFromFb);
+        const { data } = await supabase.from("products").select();
+        console.log(data);
+        //const getPostsFromFb = productsSS.docs.map(doc => doc.data());
+        setPosts(data);
         setLoading(false);
     }
 
@@ -116,7 +114,7 @@ const ListProducts = () => {
                                     products.length > 0 ? (
                                         products.map((product) => {
                                             return (
-                                                <tr key={product.name}>
+                                                <tr key={product.id}>
                                                     <td><img src={product.image} style={{ width: '50px', height: '50px', 'objectFit': 'contain' }} /></td>
                                                     <td>{product.name}</td>
                                                     <td>{product.description}</td>
@@ -125,10 +123,10 @@ const ListProducts = () => {
                                                     <td>{product.type}</td>
                                                     <td>
 
-                                                        <Link to={"view/" + product.name} className={'nav-link'}>
+                                                        <Link to={"view/" + product.id} className={'nav-link'}>
                                                             <span className="btn btn-primary ls-btn" >View</span>
                                                         </Link>
-                                                        <Link to={"edit/" + product.name} className={'nav-link'}>
+                                                        <Link to={"edit/" + product.id} className={'nav-link'}>
                                                             <span className="btn btn-warning ls-btn" >Edit</span>
                                                         </Link>
                                                         <span hidden={isDeleting} className="btn btn-danger ls-btn" onClick={() => deleteProduct(product.name, product.image)}>Delete</span>

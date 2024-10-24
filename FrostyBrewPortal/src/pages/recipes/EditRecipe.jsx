@@ -1,8 +1,6 @@
 //React Libraries
 import { useState, useRef, useEffect } from 'react';
-import { db, recipesStorageRef } from '@/config/FirebaseDb';
-import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { supabase } from '@/config/SupaBaseDb';
 import { Routes, Route, useParams, Link } from 'react-router-dom';
 
 //Styling
@@ -13,12 +11,12 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import ReactProfile from "react-profile";
 import "react-profile/themes/default.min.css";
 import { openEditor } from "react-profile";
 import Swal from 'sweetalert2'
 import Loader from '@/components/Loader';
-
+import { decode } from 'base64-arraybuffer';
+import { imageFormatter } from '@/helpers/formatters';
 
 const ViewRecipe = () => {
     const [name, setName] = useState('');
@@ -31,26 +29,29 @@ const ViewRecipe = () => {
     const [hasNewImage, setHasNewImage] = useState(false);
     const [formValidated, setFormValidated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const { recipeName } = useParams();
+    const { recipeId } = useParams();
 
     const getData = async () => {
         setIsLoading(true);
-        const docRef = doc(db, "recipes", recipeName);
-        const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-            //console.log("Document data:", docSnap.data());
-            setDescription(docSnap.data().description)
-            setIngredients(docSnap.data().ingredients)
-            setRecipeType(docSnap.data().type)
-            setComplexity(docSnap.data().complexity)
-            setInstructions(docSnap.data().instructions)
-            setRecipeImage(docSnap.data().image)
-            setName(docSnap.data().name)
-        } else {
-            // docSnap.data() will be undefined in this case
+        var { data, error } = await supabase
+            .from('recipes')
+            .select().eq("id", recipeId).limit(1).single();
+
+        if (error) {
             console.log("No such document!");
+            return;
         }
+
+        console.log("Document data:", data);
+        setDescription(data.description)
+        setIngredients(data.ingredients)
+        setRecipeType(data.type)
+        setComplexity(data.complexity)
+        setInstructions(data.instructions)
+        setName(data.name)
+        var res = supabase.storage.from("recipes").getPublicUrl(data.image);
+        setRecipeImage(res.data.publicUrl)
 
         setIsLoading(false);
     }
@@ -60,7 +61,7 @@ const ViewRecipe = () => {
         return () => { };
     }, []);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const form = e.currentTarget;
@@ -78,86 +79,75 @@ const ViewRecipe = () => {
         //Upload image
         if (hasNewImage) {
 
-            const recipeImageRef = ref(recipesStorageRef, recipeType + "/" + recipeImage.name);
-            uploadString(recipeImageRef, recipeImage.img, 'data_url').then((snapshot) => {
-                console.log('Uploaded a data_url string!');
+            //Upload image
+            var { data, error } = await supabase
+                .storage
+                .from('recipes')
+                .upload('recipes/' + recipeType + "/" + recipeImage.name, decode(recipeImage.img), {
+                    contentType: recipeImage.type,
+                    cacheControl: '3600',
+                    upsert: false
+                })
 
-                getDownloadURL(recipeImageRef).then((downloadURL) => {
-                    console.log('File available at', downloadURL);
-
-                    const recipe = {
-                        name,
-                        description,
-                        ingredients,
-                        complexity,
-                        type: recipeType,
-                        instructions,
-                        image: downloadURL,
-                    };
-
-                    const recipeRef = doc(db, "recipes", name);
-                    updateDoc(recipeRef, recipe)
-                        .then(function () {
-                            console.log("Recipe updated");
-                            Swal.fire({
-                                title: 'Recipe Updated',
-                                icon: 'success',
-                                position: "top-end",
-                                showConfirmButton: false,
-                                timer: 1500
-                            })
-                            setIsLoading(false);
-                        });
+            if (error) {
+                console.log("Failed to upload image", error);
+                Swal.fire({
+                    title: 'Failed to save' + error.toString(),
+                    icon: 'danger',
+                    position: "top-end",
+                    showConfirmButton: false,
+                    timer: 1500
                 });
-            });
-        } else {
-            const recipe = {
-                name,
-                description,
-                ingredients,
-                complexity,
-                type: recipeType,
-                instructions,
-                image: recipeImage,
-            };
+                setIsLoading(false);
+                return;
+            }
 
-            const recipeRef = doc(db, "recipes", name);
-            updateDoc(recipeRef, recipe)
-                .then(function () {
-                    console.log("Recipe updated");
-                    Swal.fire({
-                        title: 'Recipe Updated',
-                        icon: 'success',
-                        position: "top-end",
-                        showConfirmButton: false,
-                        timer: 1500
-                    })
-                    setIsLoading(false);
-                });
+            setRecipeImage(data.path);
+            setHasNewImage(false)
         }
+
+
+        const recipe = {
+            name: productName.trim(),
+            description,
+            ingredients,
+            complexity,
+            type: recipeType,
+            instructions,
+            image: recipeImage,
+        };
+
+        //Upload recipe
+        var { data, error } = await supabase.from('recipes').update(recipe).eq("id", recipeId);
+        setIsLoading(false);
+        if (error) {
+            console.log("Failed to save", error.toString());
+            Swal.fire({
+                title: 'Failed to save' + error.toString(),
+                icon: 'danger',
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 1500
+            });
+            return;
+        }
+
+        console.log("Recipe updated");
+        Swal.fire({
+            title: 'Recipe Updated',
+            icon: 'success',
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 1500
+        })
+        setIsLoading(false);
+
     };
 
     const onFileChange = async (e) => {
-        const result = await openEditor({ src: e.target.files[0] });
-
-        let img = {
-            name: e.target.files[0].name,
-            img: result.editedImage.getDataURL(),
-        };
-        //console.log(result.editedImage.getDataURL());
+        var img = await imageFormatter(e);
         setRecipeImage(img);
         setHasNewImage(true);
-    }
-
-    const onClear = () => {
-        //Clear all the fields
-        setDescription("")
-        setIngredients("")
-        setRecipeType("")
-        setComplexity("")
-        setInstructions("")
-        setRecipeImage("")
-        // setName(docSnap.data().name)
     }
 
     return (
@@ -181,25 +171,19 @@ const ViewRecipe = () => {
 
                         <Form.Group className="mb-3">
                             <Form.Label>Name</Form.Label>
-                            <Form.Control type="text" placeholder="Enter recipe name" required disabled={true}
+                            <Form.Control type="text" placeholder="Enter recipe name" required
                                 value={name} onChange={(e) => setName(e.target.value)} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Description</Form.Label>
-                            {/* <Form.Control type="text" placeholder="Enter recipe description" required
-                        value={description} onChange={(e) => setDescription(e.target.value)} /> */}
                             <ReactQuill theme="snow" value={description} onChange={setDescription} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Ingredients</Form.Label>
-                            {/* <Form.Control type="text" placeholder="Enter ingredients" required
-                        value={ingredients} onChange={(e) => setIngredients(e.target.value)} /> */}
                             <ReactQuill theme="snow" value={ingredients} onChange={setIngredients} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Instructions</Form.Label>
-                            {/* <Form.Control type="text" placeholder="Enter Instructions" required
-                        value={instructions} onChange={(e) => setInstructions(e.target.value)} /> */}
                             <ReactQuill theme="snow" value={instructions} onChange={setInstructions} />
                         </Form.Group>
                         <Row>
@@ -237,8 +221,8 @@ const ViewRecipe = () => {
                             <Button hidden={!isLoading} variant="primary" className='ls-button'>
                                 <Loader />
                             </Button>
-                            <Button variant="danger" className='ls-button' onClick={onClear}>
-                                clear
+                            <Button variant="danger" className='ls-button' onClick={getData}>
+                                Reset
                             </Button>
                         </Form.Group>
                     </Form>

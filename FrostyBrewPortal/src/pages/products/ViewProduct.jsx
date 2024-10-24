@@ -1,8 +1,7 @@
 //React Libraries
 import { useState, useEffect } from 'react';
-import { db, productsStorageRef } from '@/config/FirebaseDb';
-import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { supabase } from '@/config/SupaBaseDb';
+
 import { Routes, Route, useParams, Link } from 'react-router-dom';
 
 //Styling
@@ -22,27 +21,35 @@ const ViewProduct = () => {
     const [inStock, setInStock] = useState('yes');
     const [productImage, setProductImage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { productName } = useParams();
+    const { productId } = useParams();
     const [fieldDisabled, setFieldDisabled] = useState(true);
 
     const getData = async () => {
         setIsLoading(true);
-        console.log(JSON.stringify(productName));
-        const docRef = doc(db, "products", productName);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            console.log("Document data:", docSnap.data());
-            setDescription(docSnap.data().description)
-            setPrice(docSnap.data().price)
-            setProductType(docSnap.data().type)
-            setInStock(docSnap.data().in_stock)
-            setProductImage(docSnap.data().image)
-            setName(docSnap.data().name)
+        console.log(JSON.stringify(productId));
+        var { data, error } = await supabase
+            .from('products')
+            .select().eq("id", productId).limit(1).single();
+        // supabase
+        //     .from('products')
+        //     .select().eq("id", productId).limit(1).single().then((response) => {
+        //         console.log("Data test Leo", response.data);
+        //         console.log("Data test Leo 2", response.error);
+        //     })
 
-        } else {
-            // docSnap.data() will be undefined in this case
+        if (error) {
             console.log("No such document!");
+            return;
         }
+        console.log("Document data:", data);
+        setDescription(data.description)
+        setPrice(data.price)
+        setProductType(data.type)
+        setInStock(data.in_stock)
+        setName(data.name)
+        var res = supabase.storage.from("products").getPublicUrl(data.image);
+        setProductImage(res.data.publicUrl)
+        console.log("Image link", res.data.publicUrl)
 
         setIsLoading(false);
     }
@@ -109,7 +116,7 @@ const ViewProduct = () => {
                         </Form.Group>
                         <Form.Group className="mb-3" style={{ textAlign: 'center' }}>
 
-                            <Link to={"/products/edit/" + productName} className={'nav-link'}>
+                            <Link to={"/products/edit/" + productId} className={'nav-link'}>
                                 <Button variant="warning" type="submit" className='ls-button'>
                                     Edit
                                 </Button>

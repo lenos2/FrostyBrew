@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { db, productsStorageRef } from '@/config/FirebaseDb';
-import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
+import { supabase } from '@/config/SupaBaseDb';
+
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { openEditor } from "react-profile";
-import Swal from 'sweetalert2'
+//import { openEditor } from "react-profile";
+import Swal from 'sweetalert2';
 import Loader from '@/components/Loader';
+import { decode } from 'base64-arraybuffer';
+import { imageFormatter } from '@/helpers/formatters';
 
 const CreateProduct = () => {
 
@@ -18,11 +19,11 @@ const CreateProduct = () => {
     const [price, setPrice] = useState(0);
     const [productType, setProductType] = useState('');
     const [inStock, setInStock] = useState('yes');
-    const [productImage, setProductImage] = useState('');
+    const [productImage, setProductImage] = useState({});
     const [formValidated, setFormValidated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const form = e.currentTarget;
@@ -32,57 +33,99 @@ const CreateProduct = () => {
         setFormValidated(true);
         setIsLoading(true);
 
-        var name = productName.trim();
         //Upload image
-        const productImageRef = ref(productsStorageRef, productType + "/" + productImage.name);
-        uploadString(productImageRef, productImage.img, 'data_url').then((snapshot) => {
-            console.log('Uploaded a data_url string!');
-            console.log(JSON.stringify(productImageRef.toString()));
 
-            getDownloadURL(productImageRef).then(async (downloadURL) => {
-                console.log('File available at', downloadURL);
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            //setSession(session);
+            console.log("Session", session);
+        })
 
+        var { data, error } = await supabase
+            .storage
+            .from('products')
+            .upload("products/" + productType + "/" + productImage.name, decode(productImage.img), {
+                contentType: productImage.type,
+                cacheControl: '3600',
+                upsert: false
+            })
 
-                const product = {
-                    name,
-                    description,
-                    price: Number(price),
-                    type: productType,
-                    in_stock: inStock,
-                    image: downloadURL,
-                };
-                await setDoc(doc(db, "products", name), product)
-                    .then(function () {
-                        console.log("Product created");
-                        Swal.fire({
-                            title: 'Product Added',
-                            icon: 'success',
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 1500
-                        })
-                        setIsLoading(false);
-
-                        //Navigate to the View page of the product
-                    });
+        if (error) {
+            console.log("Failed to upload image", error);
+            Swal.fire({
+                title: 'Failed to save' + error.toString(),
+                icon: 'danger',
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 1500
             });
+            setIsLoading(false);
+            return;
+        }
+        console.log("Image Uploaded", data);
 
-        });
-        // Add a new document in collection "products"
+        const product = {
+            name: productName.trim(),
+            description,
+            price: Number(price),
+            type: productType,
+            in_stock: inStock,
+            image: data.path,
+        };
+
+
+        //Upload product
+        var { data, error } = await supabase.from('products').insert(product);
+        setIsLoading(false);
+        if (error) {
+            console.log("Failed to save", error.toString());
+            Swal.fire({
+                title: 'Failed to save' + error.toString(),
+                icon: 'danger',
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 1500
+            });
+            return;
+        }
+
+        console.log("Product created");
+        Swal.fire({
+            title: 'Product Added',
+            icon: 'success',
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 1500
+        })
+        //Navigate to the View page of the product
 
     };
 
     const onFileChange = async (e) => {
         //console.log(e.target.files[0]);
 
-        const result = await openEditor({ src: e.target.files[0] });
+        // const result = await openEditor({ src: e.target.files[0] });
 
-        let img = {
-            name: e.target.files[0].name,
-            img: result.editedImage.getDataURL(),
-        };
-        //console.log(result.editedImage.getDataURL());
+        // var dataURL = result.editedImage.getDataURL();
+        // let img = {
+        //     name: e.target.files[0].name,
+        //     type: e.target.files[0].type,
+        //     img: dataURL.replace(/^data:image\/(png|jpg|jpeg);base64,/, ""),
+        // };
+        var img = await imageFormatter(e);
         setProductImage(img);
+    }
+
+
+    const onClear = () => {
+        //Clear all the fields
+        setName("")
+        setDescription("")
+        setPrice("")
+        setProductType("")
+        setInStock("")
+        setProductImage("")
+        setFormValidated("")
+        setName("")
     }
 
     return (
@@ -158,6 +201,9 @@ const CreateProduct = () => {
                             </Button>
                             <Button hidden={!isLoading} variant="primary" className='ls-button'>
                                 <Loader />
+                            </Button>
+                            <Button variant="danger" className='ls-button' onClick={onClear}>
+                                Clear
                             </Button>
                         </Form.Group>
                     </Form>

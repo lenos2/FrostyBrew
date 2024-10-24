@@ -23,6 +23,7 @@ import ListOrders from '@/pages/orders/ListOrders';
 import ViewOrder from "@/pages/orders/ViewOrder";
 import EditOrder from "@/pages/orders/EditOrder";
 import CreateOrder from "@/pages/orders/CreateOrder";
+import Login from "./components/login/Login";
 
 const Routing = () => {
 
@@ -31,22 +32,23 @@ const Routing = () => {
             <Routes>
                 <Route path="/" element={<BaseLayout />}>
                     <Route index element={<Dashboard />} />
+                    <Route path="login" element={<Login />} />
                     <Route path="products" element={<BaseProducts />}>
                         <Route index element={<ListProducts />} />
-                        <Route path="view/:productName" element={<ViewProduct />} />
-                        <Route path="edit/:productName" element={<EditProduct />} />
+                        <Route path="view/:productId" element={<ViewProduct />} />
+                        <Route path="edit/:productId" element={<EditProduct />} />
                         <Route path="create" element={<CreateProduct />} />
                     </Route>
                     <Route path="recipes" element={<BaseRecipes />}>
                         <Route index element={<ListRecipes />} />
-                        <Route path="view/:recipeName" element={<ViewRecipe />} />
-                        <Route path="edit/:recipeName" element={<EditRecipe />} />
+                        <Route path="view/:recipeId" element={<ViewRecipe />} />
+                        <Route path="edit/:recipeId" element={<EditRecipe />} />
                         <Route path="create" element={<CreateRecipe />} />
                     </Route>
                     <Route path="orders" element={<BaseOrders />}>
                         <Route index element={<ListOrders />} />
-                        <Route path="view/:recipeName" element={<ViewOrder />} />
-                        <Route path="edit/:recipeName" element={<EditOrder />} />
+                        <Route path="view/:orderId" element={<ViewOrder />} />
+                        <Route path="edit/:orderId" element={<EditOrder />} />
                         <Route path="create" element={<CreateOrder />} />
                     </Route>
                     <Route path="cover_banner" element={<BaseBanner />}>

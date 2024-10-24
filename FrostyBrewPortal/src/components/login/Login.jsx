@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { supabase } from '@/config/SupaBaseDb';
 import Container from 'react-bootstrap/Container';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Loader from '@components/Loader';
+import Loader from '@/components/Loader';
 
 const Login = () => {
     const [isLoading, setIsLoading] = useState(false);

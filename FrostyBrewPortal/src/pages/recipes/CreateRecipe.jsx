@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { db, recipesStorageRef } from '@/config/FirebaseDb';
-import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
+import { supabase } from '@/config/SupaBaseDb';
+
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Container from 'react-bootstrap/Container';
@@ -14,6 +13,8 @@ import "react-profile/themes/default.min.css";
 import { openEditor } from "react-profile";
 import Swal from 'sweetalert2'
 import Loader from '@/components/Loader';
+import { decode } from 'base64-arraybuffer';
+import { imageFormatter } from '@/helpers/formatters';
 
 const CreateRecipe = () => {
 
@@ -27,7 +28,7 @@ const CreateRecipe = () => {
     const [formValidated, setFormValidated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const form = e.currentTarget;
@@ -43,58 +44,67 @@ const CreateRecipe = () => {
         setFormValidated(true);
         setIsLoading(true);
 
-        var name = recipeName.trim();
         //Upload image
-        const recipeImageRef = ref(recipesStorageRef, recipeType + "/" + recipeImage.name);
-        uploadString(recipeImageRef, recipeImage.img, 'data_url').then((snapshot) => {
-            console.log('Uploaded a data_url string!');
 
-            getDownloadURL(recipeImageRef).then(async (downloadURL) => {
-                console.log('File available at', downloadURL);
-                const recipe = {
-                    name,
-                    description,
-                    ingredients,
-                    complexity,
-                    type: recipeType,
-                    instructions,
-                    image: downloadURL,
-                };
+        var { data, error } = await supabase
+            .storage
+            .from('recipes')
+            .upload('recipes/' + recipeType + "/" + recipeImage.name, decode(recipeImage.img), {
+                contentType: recipeImage.type,
+                cacheControl: '3600',
+                upsert: false
+            })
 
-                await setDoc(doc(db, "recipes", name), recipe)
-                    .then(function () {
-                        console.log("Recipe created");
-                        Swal.fire({
-                            title: 'Recipe Added',
-                            icon: 'success',
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 1500
-                        })
-                        setIsLoading(false);
-                    }).catch((err) => {
-                        console.log("Failed to save", err.toString());
-                        Swal.fire({
-                            title: 'Failed to save' + err.toString(),
-                            icon: 'danger',
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                        setIsLoading(false);
-                    });
+        if (error) {
+            console.log("Failed to upload image", error);
+            Swal.fire({
+                title: 'Failed to save' + error.toString(),
+                icon: 'danger',
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 1500
             });
-        });
+            setIsLoading(false);
+            return;
+        }
+
+        const recipe = {
+            name: recipeName.trim(),
+            description,
+            ingredients,
+            complexity,
+            type: recipeType,
+            instructions,
+            image: data.path,
+        };
+
+        //Upload recipe
+        var { data, error } = await supabase.from('recipes').insert(recipe);
+        setIsLoading(false);
+        if (error) {
+            console.log("Failed to save", error.toString());
+            Swal.fire({
+                title: 'Failed to save' + error.toString(),
+                icon: 'danger',
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 1500
+            });
+            return;
+        }
+
+        console.log("Recipe created");
+        Swal.fire({
+            title: 'Recipe Added',
+            icon: 'success',
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 1500
+        })
     };
 
     const onFileChange = async (e) => {
-        const result = await openEditor({ src: e.target.files[0] });
-
-        let img = {
-            name: e.target.files[0].name,
-            img: result.editedImage.getDataURL(),
-        };
-        //console.log(result.editedImage.getDataURL());
+        var img = await imageFormatter(e);
         setRecipeImage(img);
     }
 
@@ -107,7 +117,7 @@ const CreateRecipe = () => {
         setComplexity("")
         setInstructions("")
         setRecipeImage("")
-        // setName(docSnap.data().name)
+        setName("")
     }
 
     return (
@@ -138,20 +148,14 @@ const CreateRecipe = () => {
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Description</Form.Label>
-                            {/* <Form.Control type="text" placeholder="Enter recipe description" required
-                        value={description} onChange={(e) => setDescription(e.target.value)} /> */}
                             <ReactQuill theme="snow" value={description} onChange={setDescription} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Ingredients</Form.Label>
-                            {/* <Form.Control type="text" placeholder="Enter ingredients" required
-                        value={ingredients} onChange={(e) => setIngredients(e.target.value)} /> */}
                             <ReactQuill theme="snow" value={ingredients} onChange={setIngredients} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Instructions</Form.Label>
-                            {/* <Form.Control type="text" placeholder="Enter Instructions" required
-                        value={instructions} onChange={(e) => setInstructions(e.target.value)} /> */}
                             <ReactQuill theme="snow" value={instructions} onChange={setInstructions} />
                         </Form.Group>
                         <Row>
@@ -190,7 +194,7 @@ const CreateRecipe = () => {
                                 <Loader />
                             </Button>
                             <Button variant="danger" type="submit" className='ls-button' onClick={onClear}>
-                                clear
+                                Clear
                             </Button>
                         </Form.Group>
                     </Form>

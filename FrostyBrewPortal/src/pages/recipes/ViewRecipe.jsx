@@ -1,8 +1,6 @@
 //React Libraries
-import { useState, useRef, useEffect } from 'react';
-import { db, recipesStorageRef } from '@/config/FirebaseDb';
-import { ref, uploadBytes, uploadString, getDownloadURL } from "firebase/storage";
-import { doc, getDoc } from "firebase/firestore";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/config/SupaBaseDb';
 import { Routes, Route, useParams, Link } from 'react-router-dom';
 
 //Styling
@@ -13,11 +11,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import ReactProfile from "react-profile";
 import "react-profile/themes/default.min.css";
-import { openEditor } from "react-profile";
-import Swal from 'sweetalert2'
-import Loader from '@/components/Loader';
 
 
 const ViewRecipe = () => {
@@ -30,27 +24,30 @@ const ViewRecipe = () => {
     const [recipeImage, setRecipeImage] = useState('');
     const [formValidated, setFormValidated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const { recipeName } = useParams();
+    const { recipeId } = useParams();
     const [fieldDisabled, setFieldDisabled] = useState(true);
 
     const getData = async () => {
-        const docRef = doc(db, "recipes", recipeName);
-        const docSnap = await getDoc(docRef);
         setIsLoading(true);
 
-        if (docSnap.exists()) {
-            console.log("Document data:", docSnap.data());
-            setDescription(docSnap.data().description)
-            setIngredients(docSnap.data().ingredients)
-            setRecipeType(docSnap.data().type)
-            setComplexity(docSnap.data().complexity)
-            setInstructions(docSnap.data().instructions)
-            setRecipeImage(docSnap.data().image)
-            setName(docSnap.data().name)
-        } else {
-            // docSnap.data() will be undefined in this case
+        var { data, error } = await supabase
+            .from('recipes')
+            .select().eq("id", recipeId).limit(1).single();
+
+        if (error) {
             console.log("No such document!");
+            return;
         }
+
+        console.log("Document data:", data);
+        setDescription(data.description)
+        setIngredients(data.ingredients)
+        setRecipeType(data.type)
+        setComplexity(data.complexity)
+        setInstructions(data.instructions)
+        setName(data.name)
+        var res = supabase.storage.from("recipes").getPublicUrl(data.image);
+        setRecipeImage(res.data.publicUrl)
 
         setIsLoading(false);
     }

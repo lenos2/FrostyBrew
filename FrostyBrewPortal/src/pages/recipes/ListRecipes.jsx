@@ -103,16 +103,16 @@ const ListRecipes = () => {
                                     products.length > 0 ? (
                                         products.map((product) => {
                                             return (
-                                                <tr key={product.name}>
+                                                <tr key={product.id}>
                                                     <td><img src={product.image} style={{ width: '50px', height: '50px', 'objectFit': 'contain' }} /></td>
                                                     <td>{product.name}</td>
                                                     <td>{product.complexity}</td>
                                                     <td>{product.type}</td>
                                                     <td>
-                                                        <Link to={"view/" + product.name} className={'nav-link'}>
+                                                        <Link to={"view/" + product.id} className={'nav-link'}>
                                                             <span className="btn btn-primary ls-btn" >View</span>
                                                         </Link>
-                                                        <Link to={"edit/" + product.name} className={'nav-link'}>
+                                                        <Link to={"edit/" + product.id} className={'nav-link'}>
                                                             <span className="btn btn-warning ls-btn" >Edit</span>
                                                         </Link>
 
